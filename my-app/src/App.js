@@ -8,7 +8,7 @@ import MuiAlert from "@mui/material/Alert";
 function App() {
   const recognizerRef = useRef();
   const [volume, setVolume] = useState(0);
-  const initialTagValues = ["年収"]; 
+  const initialTagValues = ["年収","結婚","病気", "障害", "低学歴", "デブ","チビ","ハゲ","キモい","キチガイ","ブス","ババア","ジジイ","ブタ","デブス","デブ女","デブ男","デブガイ","デブチビ","デブハゲ","デブキモい","デブキチガイ","デブブス","デブババア","デブジジイ","アホ","クズ"]; 
   const [finalText, setFinalText] = useState(""); 
   const handleVolumeChange = (event) => {
     setVolume(event.target.value);
@@ -45,7 +45,7 @@ function App() {
         const transcript = result[0].transcript;
         setTranscript(transcript);
         if (result.isFinal) {
-          
+
           // ▼ ここから変更：バックエンド（Python）へテキストを送信
           // try {
           //   const response = await fetch("http://localhost:8000/api/check-nondeli", {
