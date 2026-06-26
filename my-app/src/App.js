@@ -45,6 +45,28 @@ function App() {
         const transcript = result[0].transcript;
         setTranscript(transcript);
         if (result.isFinal) {
+          
+          // ▼ ここから変更：バックエンド（Python）へテキストを送信
+          // try {
+          //   const response = await fetch("http://localhost:8000/api/check-nondeli", {
+          //     method: "POST",
+          //     headers: { "Content-Type": "application/json" },
+          //     body: JSON.stringify({ text: transcript })
+          //   });
+            
+          //   const data = await response.json();
+
+          //   // バックエンドのAIが「ノンデリである（is_nondeli: true）」と判定した場合
+          //   if (data.is_nondeli) {
+          //     (userMusic || music).play();
+          //     setAlertOpen(true);
+          //     console.log(`ノンデリ検出: ${transcript} (理由: ${data.reason})`);
+          //   }
+          // } catch (error) {
+          //   console.error("バックエンド通信エラー:", error);
+          // }
+          // // ▲ ここまで
+
             // NOTE: ユーザーが効果音を追加しなければデフォルトを鳴らす
           if (tagValues.some(value => transcript.includes(value))) {
             // NOTE: ユーザーが効果音を追加しなければデフォルトを鳴らす
