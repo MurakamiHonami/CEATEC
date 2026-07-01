@@ -1,4 +1,3 @@
-import logo from './logo.svg';
 import './App.css';
 import {React, useState, useRef,useEffect} from 'react';
 import Snackbar from "@mui/material/Snackbar";
@@ -8,7 +7,8 @@ import MuiAlert from "@mui/material/Alert";
 function App() {
   const recognizerRef = useRef();
   const [volume, setVolume] = useState(0);
-  const initialTagValues = ["年収","結婚","病気", "障害", "低学歴", "デブ","チビ","ハゲ","キモい","キチガイ","ブス","ババア","ジジイ","ブタ","デブス","デブ女","デブ男","デブガイ","デブチビ","デブハゲ","デブキモい","デブキチガイ","デブブス","デブババア","デブジジイ","アホ","クズ"]; 
+  const [cutinPlaying, setCutinPlaying] = useState(false);
+  const initialTagValues = ["年収","結婚","彼女","彼氏","病気", "障害", "低学歴", "デブ","チビ","ハゲ","キモい","キチガイ","ブス","ババア","ジジイ","ブタ","デブス","デブ女","デブ男","デブガイ","デブチビ","デブハゲ","デブキモい","デブキチガイ","デブブス","デブババア","デブジジイ","アホ","クズ","バカ","カス","ゴミ","クソ","死ね","消えろ","殺す","殺すぞ","死ねよ","死ねばいいのに","死んでしまえ","死んでくれ"]; 
   const [finalText, setFinalText] = useState(""); 
   const handleVolumeChange = (event) => {
     setVolume(event.target.value);
@@ -85,10 +85,33 @@ function App() {
       });
     };
   }, []);
-  
+
+  useEffect(() => {
+    if (alertOpen) {
+      setCutinPlaying(true);
+      const timer = setTimeout(() => setCutinPlaying(false), 2200);
+      return () => clearTimeout(timer);
+    }
+  }, [alertOpen]);
 
   return (
     <div className="App">
+      {cutinPlaying && (
+        <div className="cutin-overlay" aria-hidden="true">
+          <div className="cutin-flash"></div>
+          <div className="cutin-banner">
+            <div className="cutin-slice cutin-slice-top"></div>
+            <div className="cutin-slice cutin-slice-bottom"></div>
+            <div className="cutin-burst"></div>
+            <img className="cutin-lines" src="koukasen.png" alt="" />
+            <div className="cutin-copy">
+              <div className="cutin-copy-main">WARNING</div>
+              <div className="cutin-copy-sub">NON-DELI DETECTED</div>
+            </div>
+            <img className="cutin-char" src="keikan.png" alt="" />
+          </div>
+        </div>
+      )}
       <Snackbar open={alertOpen} autoHideDuration={6000} onClose={() => setAlertOpen(false)}>
     <MuiAlert
       elevation={6}
@@ -130,7 +153,7 @@ function App() {
           <img src="volume.png" style={{height:"100px", width:"100px"}} alt="ボリュームアイコン" />
         </div>
 
-        <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value={volume} onChange={handleVolumeChange} />
+        <input type="range" id="volumeSlider" className="input-range" min="0" max="1" step="0.1" value={volume} onChange={handleVolumeChange} />
         <p>
           {finalText}
           <span style={{ color: alertOpen ? "#f00" : "#aaa" }}>
