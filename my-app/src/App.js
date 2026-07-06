@@ -15,7 +15,7 @@ function App() {
   };
   const [transcript, setTranscript] = useState("ボタンを押して検知開始"); 
   const [tagValues, setTagValues] = useState(initialTagValues);
-  const [alertOpen, setAlertOpen] = useState(true);
+  const [alertOpen, setAlertOpen] = useState(false);
   const [detecting, setDetecting] = useState(false); 
   const [userMusic, setUserMusic] = useState(null);
   useEffect(() => {
