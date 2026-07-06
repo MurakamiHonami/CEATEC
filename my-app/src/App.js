@@ -1,177 +1,101 @@
-import { useEffect, useRef, useState } from 'react';
-import Snackbar from '@mui/material/Snackbar';
-import MuiAlert from '@mui/material/Alert';
 import './App.css';
+import {React, useState, useRef,useEffect} from 'react';
+import Snackbar from "@mui/material/Snackbar";
+import MuiAlert from "@mui/material/Alert";
 
-const KEYWORDS = [
-  'チビ',
-  'デブ',
-  'ブス',
-  'キモ',
-  'キツ',
-  'バカ',
-  'アホ',
-  '死ね',
-  '消えろ',
-  '殺す',
-  '無能',
-  'クズ',
-  'ゴミ',
-  'ハゲ',
-  'ブタ',
-  'カス',
-  '学歴',
-  '年収',
-  '障害',
-  '病気',
-  '収入',
-  '彼氏',
-  '彼女',
-  '結婚',
-  '離婚',
-  '浮気',
-  'お前',
-  'おい'
-];
-
-const MARQUEE_ITEMS = [
-  '配慮あるコミュニケーションを心がけましょう',
-];
 
 function App() {
-  const recognizerRef = useRef(null);
-  const audioRef = useRef(null);
-  const restartGuardRef = useRef(false);
-  const [volume, setVolume] = useState(0.5);
-  const [transcript, setTranscript] = useState('');
-  const [finalText, setFinalText] = useState('');
-  const [alertOpen, setAlertOpen] = useState(true);
-  const [detecting, setDetecting] = useState(false);
+  const recognizerRef = useRef();
+  const [volume, setVolume] = useState(0);
   const [cutinPlaying, setCutinPlaying] = useState(false);
-  const [statusText, setStatusText] = useState('待機中');
-  const [recognitionSupported, setRecognitionSupported] = useState(true);
-
+  const initialTagValues = ["年収","結婚","彼女","彼氏","病気", "障害", "低学歴", "デブ","チビ","ハゲ","キモい","キチガイ","ブス","ババア","ジジイ","ブタ","アホ","クズ","バカ","カス","ゴミ","クソ","死ね","消えろ","殺す","ブサイク","おばさん","ババア","キモ","目障り","使えない","無能","無駄","無価値","無意味","お前","病気","障害","低学歴","デブ","チビ","ハゲ","キモい","キチガイ","ブス","ババア","ジジイ","ブタ","責任","甘え"]; 
+  const [finalText, setFinalText] = useState(""); 
+  const handleVolumeChange = (event) => {
+    setVolume(event.target.value);
+  };
+  const [transcript, setTranscript] = useState("ボタンを押して検知開始"); 
+  const [tagValues, setTagValues] = useState(initialTagValues);
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [detecting, setDetecting] = useState(false); 
+  const [userMusic, setUserMusic] = useState(null);
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      return undefined;
+    const music = new Audio('warning01.mp3');
+    const isAndroid = window.navigator.userAgent.includes("Android");
+    if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
+      alert("お使いのブラウザには未対応です");
+      return;
     }
-
-    audioRef.current =
-      typeof Audio !== 'undefined'
-        ? new Audio(`${process.env.PUBLIC_URL}/warning01.mp3`)
-        : null;
-
-    const Recognition =
+    const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    if (!Recognition) {
-      setRecognitionSupported(false);
-      setStatusText('このブラウザは音声認識に未対応です');
-      return undefined;
-    }
-
-    const recognition = new Recognition();
-    recognition.lang = 'ja-JP';
-    recognition.interimResults = true;
-    recognition.continuous = true;
-
-    recognition.onstart = () => {
+    recognizerRef.current = new SpeechRecognition();
+    recognizerRef.current.lang = "ja-JP";
+    recognizerRef.current.interimResults = true;
+    recognizerRef.current.continuous = true;
+    recognizerRef.current.onstart = () => {
       setDetecting(true);
-      setStatusText('音声監視中');
     };
-
-    recognition.onend = () => {
+    recognizerRef.current.onend = () => {
       setDetecting(false);
-      if (restartGuardRef.current) {
-        try {
-          recognition.start();
-        } catch (error) {
-          setStatusText('音声認識を再開できませんでした');
-        }
-      } else {
-        setStatusText('待機中');
+      if (isAndroid && !alertOpen) {
+        recognizerRef.current.start();
       }
     };
+    recognizerRef.current.onresult = event => {
+      [...event.results].slice(event.resultIndex).forEach(result => {
+        const transcript = result[0].transcript;
+        setTranscript(transcript);
+        if (result.isFinal) {
 
-    recognition.onerror = () => {
-      setStatusText('音声認識でエラーが発生しました');
-      setDetecting(false);
-    };
+          // ▼ ここから変更：バックエンド（Python）へテキストを送信
+          // try {
+          //   const response = await fetch("http://localhost:8000/api/check-nondeli", {
+          //     method: "POST",
+          //     headers: { "Content-Type": "application/json" },
+          //     body: JSON.stringify({ text: transcript })
+          //   });
+            
+          //   const data = await response.json();
 
-    recognition.onresult = (event) => {
-      let latestFinal = '';
+          //   // バックエンドのAIが「ノンデリである（is_nondeli: true）」と判定した場合
+          //   if (data.is_nondeli) {
+          //     (userMusic || music).play();
+          //     setAlertOpen(true);
+          //     console.log(`ノンデリ検出: ${transcript} (理由: ${data.reason})`);
+          //   }
+          // } catch (error) {
+          //   console.error("バックエンド通信エラー:", error);
+          // }
+          // // ▲ ここまで
 
-      Array.from(event.results)
-        .slice(event.resultIndex)
-        .forEach((result) => {
-          const text = result[0].transcript.trim();
-
-          if (result.isFinal) {
-            latestFinal = text;
-          } else {
-            setTranscript(text);
+            // NOTE: ユーザーが効果音を追加しなければデフォルトを鳴らす
+          if (tagValues.some(value => transcript.includes(value))) {
+            // NOTE: ユーザーが効果音を追加しなければデフォルトを鳴らす
+            (userMusic || music).play();
+            setAlertOpen(true);
           }
-        });
-
-      if (!latestFinal) {
-        return;
-      }
-
-      setFinalText(latestFinal);
-      setTranscript('');
-
-      if (KEYWORDS.some((keyword) => latestFinal.includes(keyword))) {
-        const audio = audioRef.current;
-        if (audio) {
-          audio.currentTime = 0;
-          audio.volume = Number(volume);
-          audio.play().catch(() => {});
+    
+          // 音声認識が完了して文章が確定
+          setFinalText(prevState => {
+            // Android chromeなら値をそのまま返す
+            return isAndroid ? transcript : prevState;
+          });
+          // 文章確定したら候補を削除
+          setTranscript("");
         }
-        setAlertOpen(true);
-      }
+      });
     };
-
-    recognizerRef.current = recognition;
-
-    return () => {
-      restartGuardRef.current = false;
-      recognition.stop();
-    };
-  }, [volume]);
+  }, []);
 
   useEffect(() => {
-    if (!alertOpen) {
-      return undefined;
+    if (alertOpen) {
+      setCutinPlaying(true);
+      const timer = setTimeout(() => setCutinPlaying(false), 2200);
+      return () => clearTimeout(timer);
     }
-
-    setCutinPlaying(true);
-    const timer = setTimeout(() => setCutinPlaying(false), 2400);
-    return () => clearTimeout(timer);
   }, [alertOpen]);
 
-  const handleRecognitionToggle = () => {
-    const recognition = recognizerRef.current;
-
-    if (!recognition) {
-      return;
-    }
-
-    if (detecting) {
-      restartGuardRef.current = false;
-      recognition.stop();
-      return;
-    }
-
-    restartGuardRef.current = true;
-    try {
-      recognition.start();
-    } catch (error) {
-      setStatusText('音声認識を開始できませんでした');
-    }
-  };
-
   return (
-    <div className="app-shell">
+    <div className="App">
       {cutinPlaying && (
         <div className="cutin-overlay" aria-hidden="true">
           <div className="cutin-flash"></div>
@@ -179,168 +103,72 @@ function App() {
             <div className="cutin-slice cutin-slice-top"></div>
             <div className="cutin-slice cutin-slice-bottom"></div>
             <div className="cutin-burst"></div>
-            <img
-              className="cutin-lines"
-              src={`${process.env.PUBLIC_URL}/koukasen.png`}
-              alt=""
-            />
+            <img className="cutin-lines" src="koukasen.png" alt="" />
             <div className="cutin-copy">
               <div className="cutin-copy-main">WARNING</div>
               <div className="cutin-copy-sub">NON-DELI DETECTED</div>
             </div>
-            <img
-              className="cutin-char"
-              src={`${process.env.PUBLIC_URL}/keikan.png`}
-              alt=""
-            />
+            <img className="cutin-char" src="keikan.png" alt="" />
           </div>
         </div>
       )}
-
-      <Snackbar
-        open={alertOpen}
-        autoHideDuration={4000}
-        onClose={() => setAlertOpen(false)}
-      >
-        <MuiAlert
-          elevation={6}
-          variant="filled"
-          onClose={() => setAlertOpen(false)}
-          severity="warning"
-          sx={{ width: '100%' }}
-        >
-          危険ワードを検知しました
-        </MuiAlert>
-      </Snackbar>
-
-      <header className="topbar">
-        <div className="brand">Non-delicacy Alert: NKC-UG</div>
-        <nav className="topnav" aria-label="Main navigation">
-          <a href="#dashboard">HOME</a>
-          <a href="#monitor">MONITOR</a>
-          <a href="#logs">KEYWORDS</a>
-        </nav>
+      <Snackbar open={alertOpen} autoHideDuration={6000} onClose={() => setAlertOpen(false)}>
+    <MuiAlert
+      elevation={6}
+      variant="filled"
+      onClose={() => setAlertOpen(false)}
+      severity="warning"
+    >
+      ノンデリ発言を検出しました
+    </MuiAlert>
+  </Snackbar>
+      <header className="App-header">
+        <div className="loop-wrap">
+    <ul className="loop-area">
+        <li className="content">いつも配慮あるコミュニケーションを</li>
+        <li className="content">いつも配慮あるコミュニケーションを</li>
+        <li className="content">いつも配慮あるコミュニケーションを</li>
+        <li className="content">いつも配慮あるコミュニケーションを</li>
+    </ul>
+    <ul className="loop-area">
+        <li className="content">いつも配慮あるコミュニケーションを</li>
+        <li className="content">いつも配慮あるコミュニケーションを</li>
+        <li className="content">いつも配慮あるコミュニケーションを</li>
+        <li className="content">いつも配慮あるコミュニケーションを</li>
+    </ul>
+    <ul className="loop-area">
+        <li className="content">いつも配慮あるコミュニケーションを</li>
+        <li className="content">いつも配慮あるコミュニケーションを</li>
+        <li className="content">いつも配慮あるコミュニケーションを</li>
+        <li className="content">いつも配慮あるコミュニケーションを</li>
+    </ul>
+</div>
       </header>
-
       <main>
-        <section className="hero" id="dashboard">
-          <div className="hazard-line" />
-          <div className="hazard-line bottom" />
-          <div className="hero-content">
-            <div className="hero-logo-wrap">
-              <img
-                className="hero-logo"
-                src={`${process.env.PUBLIC_URL}/smile.png`}
-                alt="監視システムのメインビジュアル"
-              />
-            </div>
-            <div className="hero-chip">SYSTEM STATUS: ACTIVE</div>
-            <p>
-              会話から不適切な発言を検知します。
-            </p>
-            <button
-              className="btn-modern"
-              type="button"
-              onClick={handleRecognitionToggle}
-              disabled={!recognitionSupported}
-            >
-              {detecting ? 'STOP SYSTEM' : 'START SYSTEM'}
-            </button>
-          </div>
-        </section>
+        <div style={{display:"flex", flexDirection:"column", alignItems:"center"}}>
 
-        <section className="marquee-section" aria-label="System alerts">
-          <div className="loop-wrap">
-            <div className="loop-track">
-              {MARQUEE_ITEMS.map((item, index) => (
-                <span key={`primary-${index}`} className="marquee-item">
-                  {item}
-                </span>
-              ))}
-            </div>
-            <div className="loop-track" aria-hidden="true">
-              {MARQUEE_ITEMS.map((item, index) => (
-                <span key={`secondary-${index}`} className="marquee-item">
-                  {item}
-                </span>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="dashboard-grid" id="monitor">
-          <article className="panel panel-wide">
-
-            <h2>検出履歴</h2>
-            <p>
-              リアルタイムで認識中の音声と、最後に確定したテキストを表示します。
-            </p>
-            <div className="transcript-box">
-              <div className="transcript-row">
-                <span className="transcript-title">検出状態</span>
-                <strong>{statusText}</strong>
-              </div>
-              <div className="transcript-row">
-                <span className="transcript-title">文字起こし</span>
-                <span>{transcript || '...待機中'}</span>
-              </div>
-              {/* <div className="transcript-row">
-                <span className="transcript-title">不適切発言</span>
-                <span>{finalText || 'まだ検出されていません'}</span>
-              </div> */}
-            </div>
-          </article>
-
-          <article className="panel">
-            <h2>音量調整</h2>
-            <div className="volume-card">
-              <img
-                className="volume-icon"
-                src={`${process.env.PUBLIC_URL}/volume.png`}
-                alt=""
-              />
-              <input
-                className="volume-slider"
-                type="range"
-                min="0"
-                max="1"
-                step="0.1"
-                value={volume}
-                onChange={(event) => setVolume(Number(event.target.value))}
-                aria-label="Alert volume"
-              />
-              <div className="volume-meta">
-                <span>OUTPUT</span>
-                <strong>{Math.round(volume * 100)}%</strong>
-              </div>
-            </div>
-          </article>
-
-          <article className="panel" id="logs">
-            <h2>不適切ワード</h2>
-            <p>以下のワードが含まれると警告を発火します。</p>
-            <div className="keyword-list">
-              {KEYWORDS.map((keyword) => (
-                <span key={keyword} className="keyword-chip">
-                  {keyword}
-                </span>
-              ))}
-            </div>
-          </article>
-        </section>
-      </main>
-
-      <footer className="footer">
-        <div className="footer-inner">
-          <div className="footer-title">Non-delicacy Alert</div>
-          <div className="footer-links">
-            <a href="#dashboard">HOME</a>
-            <a href="#monitor">MONITOR</a>
-            <a href="#logs">KEYWORDS</a>
-          </div>
-          <p>© 2026 NKC-UG</p>
+          <img src="smile.png" style={{height:"280px", width:"370px",marginTop:"20px"}} alt="笑顔の画像" /><br />
         </div>
-      </footer>
+        <div style={{display:"flex", flexDirection:"column", alignItems:"center"}}>
+          <img src="volume.png" style={{height:"100px", width:"100px"}} alt="ボリュームアイコン" />
+        </div>
+
+        <input type="range" id="volumeSlider" className="input-range" min="0" max="1" step="0.1" value={volume} onChange={handleVolumeChange} />
+        <p>
+          {finalText}
+          <span style={{ color: alertOpen ? "#f00" : "#aaa" }}>
+            {transcript}
+          </span>
+        </p>
+
+        <button className="btn_10" 
+        disabled={detecting}
+          onClick={() => {
+                  recognizerRef.current.start();
+                }}>
+          <span>{detecting ? "検知中..." : "検知開始"}</span>
+        </button>
+      </main>
     </div>
   );
 }
