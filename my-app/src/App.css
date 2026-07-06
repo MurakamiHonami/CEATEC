@@ -1,15 +1,4 @@
-/* =========================================
-   1. CSS Variables (繝・・繝槭き繝ｩ繝ｼ縺ｮ險ｭ螳・
-   ========================================= */
-:root {
-  --bg-main: #CCCCCC; /* 繝繝ｼ繧ｯ繧ｰ繝ｬ繝ｼ縺ｮ閭梧勹濶ｲ */
-  --bg-header: #282c34;
-  --color-primary: #61dafb;
-  --color-accent: #FFD700; /* 蜴溯牡縺ｮ鮟・牡縺九ｉ繝ｪ繝・メ縺ｪ繧ｴ繝ｼ繝ｫ繝峨う繧ｨ繝ｭ繝ｼ縺ｸ */
-  --color-accent-hover: #FDB931;
-  --text-dark: #1a1a1a;
-  --text-light: #ffffff;
-}
+
 
 /* =========================================
    2. Base Styles
@@ -122,44 +111,34 @@ main {
 .btn_10 {
   width: 300px;
   height: 75px;
+  font-size: 1.7rem;
+  letter-spacing: 0.05em;
   border: none;
-  border-radius: 16px;
+  border-radius: 12px;
+
   cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 2rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: #111;
-  background: linear-gradient(135deg, #ffe600, #ffd500);
-  box-shadow: 0 10px 25px rgba(255, 213, 0, 0.35);
-  transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease,
-    filter 0.25s ease;
+
+  font-family: "JetBrains Mono", monospace;  color: #000;
+
+  font-weight: 800;
+
+  background: var(--color-primary);
+  box-shadow:
+    0 0 20px var(--color-primary-hover),
+    0 0 40px rgba(255, 255, 255, 0.2);
+
+  transition: all .3s ease;
 }
 
 .btn_10:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 15px 35px rgba(255, 213, 0, 0.55);
-  filter: brightness(1.05);
+  transform: scale(1.05);
+  box-shadow:
+    0 0 30px rgba(255,255,255,.6),
+    0 0 60px rgba(255,255,255,.3);
 }
 
 .btn_10:active {
-  transform: translateY(1px);
-}
-
-.btn_10::before {
-  content: "";
-  position: absolute;
-}
-
-.btn_10:focus {
-  outline: none;
-  box-shadow:
-    0 0 0 4px rgba(255, 213, 0, 0.25),
-    0 15px 35px rgba(255, 213, 0, 0.5);
+  transform: scale(.95);
 }
 
 /* =========================================
@@ -433,3 +412,44 @@ main {
   }
 }
 
+/* =========================================
+   1. Design System
+   ========================================= */
+:root {
+  /* Background */
+  --bg-main: #1F1F1F;
+  --bg-header: #333333;
+  /* Primary */
+  --color-primary: #FFD700;
+  --color-primary-hover: #e9c400;
+
+  /* Accent */
+  --color-accent: #FF3E3E;
+  --color-accent-hover: #ff6666;
+
+  /* Surface */
+  --surface: #131313;
+  --surface-container: #201f1f;
+  --surface-container-low: #1c1b1b;
+  --surface-container-high: #2a2a2a;
+  --surface-container-highest: #353534;
+  --surface-bright: #3a3939;
+
+  /* Text */
+  --text-dark: #e5e2e1;
+  --text-light: #ffffff;
+  --text-muted: #d0c6ab;
+
+  /* Border */
+  --border-color: #4d4732;
+  --outline-color: #999077;
+
+  /* States */
+  --warning-red: #FF3E3E;
+  --success-cyan: #12f0ff;
+
+  /* Effects */
+  --shadow-gold: rgba(255, 215, 0, 0.35);
+  --shadow-gold-strong: rgba(255, 215, 0, 0.55);
+  --shadow-red: rgba(255, 62, 62, 0.4);
+}
