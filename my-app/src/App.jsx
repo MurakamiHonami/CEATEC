@@ -14,10 +14,11 @@ function App() {
     setVolume(event.target.value);
   };
   const [transcript, setTranscript] = useState("ボタンを押して検知開始"); 
-  const [tagValues, setTagValues] = useState(initialTagValues);
+  const [tagValues] = useState(initialTagValues);
   const [alertOpen, setAlertOpen] = useState(false);
   const [detecting, setDetecting] = useState(false); 
-  const [userMusic, setUserMusic] = useState(null);
+  const [userMusic] = useState(null);
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     const music = new Audio('warning01.mp3');
     const isAndroid = window.navigator.userAgent.includes("Android");
@@ -85,6 +86,7 @@ function App() {
       });
     };
   }, []);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   useEffect(() => {
     if (alertOpen) {
