@@ -29,6 +29,16 @@ Your app is ready to be deployed!
 
 See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
 
+## Deploy To Vercel
+
+This app can be deployed to Vercel with the included [`vercel.json`](./vercel.json).
+
+1. Import this project into Vercel.
+2. Set the project root directory to `CEATEC/my-app` if you are importing the whole repository.
+3. Deploy with the default settings.
+
+Vercel will run `npm run build` and publish the `build` directory.
+
 ### `npm run eject`
 
 **Note: this is a one-way operation. Once you `eject`, you can't go back!**
