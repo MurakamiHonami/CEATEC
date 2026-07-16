@@ -8,7 +8,7 @@ function App() {
   const recognizerRef = useRef();
   const [volume, setVolume] = useState(0);
   const [cutinPlaying, setCutinPlaying] = useState(false);
-  const initialTagValues = ["年収","結婚","彼女","彼氏","病気", "障害", "低学歴", "デブ","チビ","ハゲ","キモい","キチガイ","ブス","ババア","ジジイ","ブタ","デブス","デブ女","デブ男","デブガイ","デブチビ","デブハゲ","デブキモい","デブキチガイ","デブブス","デブババア","デブジジイ","アホ","クズ","バカ","カス","ゴミ","クソ","死ね","消えろ","殺す","殺すぞ","死ねよ","死ねばいいのに","死んでしまえ","死んでくれ"]; 
+  const initialTagValues = ["年収","結婚","彼女","彼氏","病気", "障害", "低学歴", "デブ","チビ","ハゲ","キモい","キチガイ","ブス","ババア","ジジイ","ブタ","アホ","クズ","バカ","カス","ゴミ","クソ","死ね","消えろ","殺す","ブサイク","おばさん","ババア","キモ","目障り","使えない","無能","無駄","無価値","無意味","お前","病気","障害","低学歴","デブ","チビ","ハゲ","キモい","キチガイ","ブス","ババア","ジジイ","ブタ","責任","甘え"];  
   const [finalText, setFinalText] = useState(""); 
   const handleVolumeChange = (event) => {
     setVolume(event.target.value);
@@ -108,7 +108,7 @@ function App() {
               <div className="cutin-copy-main">WARNING</div>
               <div className="cutin-copy-sub">NON-DELI DETECTED</div>
             </div>
-            <img className="cutin-char" src="keikan.png" alt="" />
+            <img className="cutin-char" src="keikan3.png" alt="cutin" />
           </div>
         </div>
       )}
@@ -125,29 +125,29 @@ function App() {
       <header className="App-header">
         <div className="loop-wrap">
     <ul className="loop-area">
-        <li className="content">いつも配慮あるコミュニケーションを</li>
-        <li className="content">いつも配慮あるコミュニケーションを</li>
-        <li className="content">いつも配慮あるコミュニケーションを</li>
-        <li className="content">いつも配慮あるコミュニケーションを</li>
+        <li className="content">いつも配慮あるコミュニケーションを☺</li>
+        <li className="content">いつも配慮あるコミュニケーションを☺</li>
+        <li className="content">いつも配慮あるコミュニケーションを☺</li>
+        <li className="content">いつも配慮あるコミュニケーションを☺</li>
     </ul>
     <ul className="loop-area">
-        <li className="content">いつも配慮あるコミュニケーションを</li>
-        <li className="content">いつも配慮あるコミュニケーションを</li>
-        <li className="content">いつも配慮あるコミュニケーションを</li>
-        <li className="content">いつも配慮あるコミュニケーションを</li>
+        <li className="content">いつも配慮あるコミュニケーションを☺</li>
+        <li className="content">いつも配慮あるコミュニケーションを☺</li>
+        <li className="content">いつも配慮あるコミュニケーションを☺</li>
+        <li className="content">いつも配慮あるコミュニケーションを☺</li>
     </ul>
     <ul className="loop-area">
-        <li className="content">いつも配慮あるコミュニケーションを</li>
-        <li className="content">いつも配慮あるコミュニケーションを</li>
-        <li className="content">いつも配慮あるコミュニケーションを</li>
-        <li className="content">いつも配慮あるコミュニケーションを</li>
+        <li className="content">いつも配慮あるコミュニケーションを☺</li>
+        <li className="content">いつも配慮あるコミュニケーションを☺</li>
+        <li className="content">いつも配慮あるコミュニケーションを☺</li>
+        <li className="content">いつも配慮あるコミュニケーションを☺</li>
     </ul>
 </div>
       </header>
       <main>
         <div style={{display:"flex", flexDirection:"column", alignItems:"center"}}>
 
-          <img src="smile.png" style={{height:"280px", width:"370px",marginTop:"20px"}} alt="笑顔の画像" /><br />
+          <img src="keikan.png" style={{height:"280px", width:"160px",marginTop:"10px"}} alt="警官の画像" /><br />
         </div>
         <div style={{display:"flex", flexDirection:"column", alignItems:"center"}}>
           <img src="volume.png" style={{height:"100px", width:"100px"}} alt="ボリュームアイコン" />
