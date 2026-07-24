@@ -1,0 +1,7 @@
+﻿text,label,confidence,source,needs_review
+明日の会議は10時からです,0,0.9147,koheiduck_NEUTRAL,True
+これくらい常識でしょ、普通わかるよね,1,0.826,koheiduck_NEUTRAL,True
+今度からは気をつけます,0,0.8873,koheiduck_NEUTRAL,True
+質問があれば聞いてください,,0.8721,koheiduck_NEUTRAL,True
+資料の締め切りは金曜日でお願いします,,0.7583,koheiduck_NEUTRAL,True
+ちゃんと確認してから送ってくださいね,,0.8077,koheiduck_NEUTRAL,True
