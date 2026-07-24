@@ -15,19 +15,20 @@ def initialize_model():
     global classifier
 
     if classifier is None:
-        print("Initializing text classification model...")
+        print("Initializing toxicity detection model...")
 
         try:
-            # 日本語感情分析・毒性検出用のモデル
-            # cohereの多言語embed+ゼロショットではなく、より直接的なアプローチ
+            # 多言語毒性検出モデル（日本語対応）
+            # textdetox/glot500-toxicity-classifier は2025年3月更新
+            # 15言語対応の二値分類（有害/非有害）
             model_name = os.environ.get(
                 'MODEL_NAME',
-                'cardiffnlp/xlm-roberta-base-sentiment-multilingual'  # 多言語感情分析
+                'textdetox/glot500-toxicity-classifier'
             )
 
-            # 感情分析パイプラインの初期化
+            # 毒性検出パイプラインの初期化
             classifier = pipeline(
-                "sentiment-analysis",
+                "text-classification",
                 model=model_name,
                 device=-1,  # CPUを使用
                 top_k=None  # 全ラベルのスコアを取得
@@ -40,7 +41,7 @@ def initialize_model():
 
 def analyze_text_with_ml(text: str) -> Dict[str, Any]:
     """
-    機械学習モデルを使用してテキストを分析
+    機械学習モデルを使用してテキストの毒性を分析
 
     Args:
         text: チェック対象のテキスト
@@ -52,11 +53,12 @@ def analyze_text_with_ml(text: str) -> Dict[str, Any]:
         raise Exception("モデルが初期化されていません")
 
     try:
-        # 感情分析を実行
+        # 毒性検出を実行
         result = classifier(text[:512])
 
         # 結果の解析
-        # result = [[{'label': 'positive', 'score': 0.9}, {'label': 'negative', 'score': 0.1}, ...]]
+        # result = [[{'label': 'LABEL_0', 'score': 0.9}, {'label': 'LABEL_1', 'score': 0.1}]]
+        # LABEL_0 = neutral (非有害), LABEL_1 = toxic (有害)
         if isinstance(result, list) and len(result) > 0:
             scores_list = result[0] if isinstance(result[0], list) else result
         else:
@@ -65,62 +67,38 @@ def analyze_text_with_ml(text: str) -> Dict[str, Any]:
         # ラベルとスコアを辞書化
         label_scores = {item['label']: item['score'] for item in scores_list}
 
-        # 多言語感情分析モデルのラベル: Positive, Neutral, Negative
-        positive_score = label_scores.get('positive', label_scores.get('Positive', label_scores.get('POSITIVE', 0.0)))
-        neutral_score = label_scores.get('neutral', label_scores.get('Neutral', label_scores.get('NEUTRAL', 0.0)))
-        negative_score = label_scores.get('negative', label_scores.get('Negative', label_scores.get('NEGATIVE', 0.0)))
+        # LABEL_0 = neutral (非有害), LABEL_1 = toxic (有害)
+        neutral_score = label_scores.get('LABEL_0', 0.0)
+        toxic_score = label_scores.get('LABEL_1', 0.0)
 
-        # ラベルマッピング（大文字小文字を考慮）
-        for key in label_scores.keys():
-            if key.lower() == 'positive':
-                positive_score = label_scores[key]
-            elif key.lower() == 'neutral':
-                neutral_score = label_scores[key]
-            elif key.lower() == 'negative':
-                negative_score = label_scores[key]
+        # 判定ロジック: 毒性スコアが閾値以上なら不適切
+        # 閾値を0.5に設定（50%以上の確信度で有害と判定された場合）
+        threshold = 0.5
+        is_inappropriate = toxic_score >= threshold
 
-        # 判定ロジック:
-        # Negativeスコアが高い = 不適切な可能性
-        # ただし、Negativeは「悲しい」「失望」なども含むので、閾値を高めに設定
-        # かつ、Positiveが極端に低いことも考慮
-        is_inappropriate = (
-            negative_score > 0.7 or  # 強いネガティブ
-            (negative_score > 0.5 and positive_score < 0.1)  # 中程度のネガティブ + ポジティブがほぼ0
-        )
-
-        # ラベルと信頼度の決定
-        if negative_score > positive_score and negative_score > neutral_score:
-            top_label_ja = "ネガティブな発言"
-            top_score = negative_score
-            if is_inappropriate:
-                top_label_ja = "不適切で攻撃的な発言"
-        elif positive_score > negative_score and positive_score > neutral_score:
-            top_label_ja = "ポジティブな発言"
-            top_score = positive_score
-        else:
-            top_label_ja = "中立的な発言"
-            top_score = neutral_score
-
-        # 理由の生成
+        # ラベルと理由の決定
         if is_inappropriate:
+            top_label_ja = "不適切で攻撃的な発言"
+            top_score = toxic_score
             reasons = [
-                f"AIモデルが「{top_label_ja}」と判定しました（ネガティブ度: {negative_score:.1%}）"
+                f"AIモデルが毒性のある発言と判定しました（毒性度: {toxic_score:.1%}）"
             ]
         else:
+            top_label_ja = "適切な発言"
+            top_score = neutral_score
             reasons = [
-                f"問題は検出されませんでした（ポジティブ: {positive_score:.1%}, 中立: {neutral_score:.1%}, ネガティブ: {negative_score:.1%}）"
+                f"問題は検出されませんでした（非有害: {neutral_score:.1%}, 有害: {toxic_score:.1%}）"
             ]
 
         return {
             'text': text,
             'is_inappropriate': is_inappropriate,
-            'confidence': negative_score if is_inappropriate else max(positive_score, neutral_score),
+            'confidence': toxic_score if is_inappropriate else neutral_score,
             'top_label': top_label_ja,
             'top_score': top_score,
             'all_scores': {
-                'ポジティブ': positive_score,
-                '中立': neutral_score,
-                'ネガティブ': negative_score
+                '非有害': neutral_score,
+                '有害': toxic_score
             },
             'reasons': reasons
         }
@@ -253,7 +231,7 @@ if __name__ == '__main__':
     ]
 
     print("=" * 80)
-    print("機械学習ベースのノンデリカシー発言検出テスト")
+    print("毒性検出モデルによるノンデリカシー発言検出テスト")
     print("=" * 80)
     print()
 
