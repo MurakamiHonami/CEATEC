@@ -10,10 +10,6 @@
     "頭悪いからできないよね",1
     "ごめんね",0
     "すみませんでした",0
-
-データが少ない場合は、前段でLLM(Claude API)による自動ラベル付けで
-候補データを大量生成し、その一部を人手でチェックしてから
-このスクリプトに読み込ませる運用がおすすめです。
 """
 
 import numpy as np
@@ -43,9 +39,34 @@ LABEL2ID = {v: k for k, v in ID2LABEL.items()}
 
 def load_data(path: str):
     df = pd.read_csv(path)
-    assert {"text", "label"}.issubset(df.columns), "data.csv には text, label 列が必要です"
+    assert {"text", "label"}.issubset(df.columns), "labeled_data.csv には text, label 列が必要です"
+
+    # ---- 診断: dropna前の状態を確認 ----
+    print(f"読み込み直後の行数: {len(df)}")
+    empty_text_count = (df["text"].isna() | (df["text"].astype(str).str.strip() == "")).sum()
+    if empty_text_count > 0:
+        print(f"警告: text列が空/NaNの行が {empty_text_count} 件あります")
+
     df = df.dropna(subset=["text", "label"])
     df["label"] = df["label"].astype(int)
+
+    before = len(df)
+
+    # ---- 診断: 実際に重複しているtextの中身を表示 ----
+    dup_mask = df.duplicated(subset=["text"], keep=False)
+    if dup_mask.sum() > 0:
+        print(f"\n重複が検出されたテキスト（頻度上位10件を表示）:")
+        dup_texts = df[dup_mask]["text"].value_counts().head(10)
+        for text, count in dup_texts.items():
+            print(f"  {count}回: {text!r}")
+        print()
+
+    # 完全一致の重複を除去（train/evalへのデータ漏洩を防ぐため）
+    df = df.drop_duplicates(subset=["text"], keep="first")
+    removed = before - len(df)
+    if removed > 0:
+        print(f"重複データを {removed} 件削除しました（{before} 件 -> {len(df)} 件）")
+
     return df
 
 
@@ -88,12 +109,8 @@ def main():
     print(f"クラス重み: {dict(zip(['該当なし', '該当あり'], class_weights))}")
 
     class WeightedTrainer(Trainer):
-        def __init__(self, *args, tokenizer=None, **kwargs):
-            # tokenizer を processing_class に変換して親クラスの Trainer に渡す
-            super().__init__(*args, processing_class=tokenizer, **kwargs)
-
         def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
-            labels = inputs.get("labels")  # popからgetに変更（安全策）
+            labels = inputs.pop("labels")
             outputs = model(**inputs)
             logits = outputs.logits
             loss_fct = nn.CrossEntropyLoss(weight=class_weights_tensor.to(logits.device))
@@ -107,8 +124,6 @@ def main():
         precision, recall, f1, _ = precision_recall_fscore_support(
             labels, preds, average="binary", pos_label=1, zero_division=0
         )
-
-
         acc = accuracy_score(labels, preds)
         return {
             "accuracy": acc,
@@ -120,7 +135,7 @@ def main():
     # ---- 5. 学習設定 ----
     training_args = TrainingArguments(
         output_dir=OUTPUT_DIR,
-        num_train_epochs=3, #        3に変更
+        num_train_epochs=5,
         per_device_train_batch_size=16,
         per_device_eval_batch_size=32,
         learning_rate=2e-5,
@@ -140,7 +155,7 @@ def main():
         args=training_args,
         train_dataset=train_ds,
         eval_dataset=eval_ds,
-        tokenizer=tokenizer,
+        processing_class=tokenizer,
         data_collator=data_collator,
         compute_metrics=compute_metrics,
     )
@@ -156,6 +171,7 @@ def main():
     trainer.save_model(f"{OUTPUT_DIR}/final")
     tokenizer.save_pretrained(f"{OUTPUT_DIR}/final")
     print(f"モデルを {OUTPUT_DIR}/final に保存しました")
+
 
 if __name__ == "__main__":
     main()

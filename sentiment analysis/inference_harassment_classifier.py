@@ -4,9 +4,17 @@ train_harassment_classifier.py で保存したモデルを使う
 """
 
 import torch
+import os
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
-MODEL_PATH = "./harassment_classifier/final"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "harassment_classifier", "final")
+
+if not os.path.exists(MODEL_PATH):
+    raise FileNotFoundError(
+        f"モデルが見つかりません: {MODEL_PATH}\n"
+        f"train_harassment_classifier.py を実行してモデルを保存済みか確認してください。"
+    )
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
 model = AutoModelForSequenceClassification.from_pretrained(MODEL_PATH)
@@ -33,9 +41,6 @@ if __name__ == "__main__":
         "頭悪いからできないよね",
         "ごめんね",
         "すみませんでした",
-        "ありがとう",
-        "わざわざありがとう",
-        "かす"
     ]
     for text in texts:
         print("*" * 50)
