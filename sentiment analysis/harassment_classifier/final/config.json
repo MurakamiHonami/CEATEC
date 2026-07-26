@@ -3,13 +3,13 @@
   "architectures": [
     "BertForSequenceClassification"
   ],
-  "attention_probs_dropout_prob": 0.1,
+  "attention_probs_dropout_prob": 0.2,
   "bos_token_id": null,
   "classifier_dropout": null,
   "dtype": "float32",
   "eos_token_id": null,
   "hidden_act": "gelu",
-  "hidden_dropout_prob": 0.1,
+  "hidden_dropout_prob": 0.2,
   "hidden_size": 768,
   "id2label": {
     "0": "\u8a72\u5f53\u306a\u3057",
@@ -29,7 +29,7 @@
   "num_hidden_layers": 12,
   "pad_token_id": 0,
   "tie_word_embeddings": true,
-  "transformers_version": "5.14.1",
+  "transformers_version": "5.13.1",
   "type_vocab_size": 2,
   "use_cache": false,
   "vocab_size": 32768

@@ -13,10 +13,12 @@
     - 結果を eval_history.csv に追記（実行のたびに1行、精度の推移を記録）
 """
 
+import argparse
 import csv
 import os
 from datetime import datetime
 
+import pandas as pd
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score
@@ -27,6 +29,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "harassment_classifier", "final")
 EVAL_SAMPLES_PATH = os.path.join(BASE_DIR, "eval_samples.csv")
 HISTORY_PATH = os.path.join(BASE_DIR, "eval_history.csv")
+LABELED_DATA_PATH = os.path.join(BASE_DIR, "labeled_data.csv")
 
 print(f"モデルを探しているパス: {MODEL_PATH}")
 if not os.path.exists(MODEL_PATH):
@@ -54,11 +57,11 @@ def predict(text: str) -> dict:
     }
 
 
-def main():
-    with open(EVAL_SAMPLES_PATH, encoding="utf-8-sig") as f:
+def main(eval_path: str = EVAL_SAMPLES_PATH, record_history: bool = True):
+    with open(eval_path, encoding="utf-8-sig") as f:
         samples = list(csv.DictReader(f))
 
-    print(f"検証セット: {len(samples)}件\n")
+    print(f"検証セット: {eval_path} ({len(samples)}件)\n")
 
     y_true = []
     y_pred = []
@@ -103,18 +106,39 @@ def main():
             f"(確信度 {m['confidence']:.4f})"
         )
 
+    # 学習に使った labeled_data.csv の件数も記録する（精度推移の横軸に使うため）
+    if os.path.exists(LABELED_DATA_PATH):
+        train_data_size = len(pd.read_csv(LABELED_DATA_PATH))
+    else:
+        train_data_size = None
+        print(f"警告: {LABELED_DATA_PATH} が見つからないため train_data_size は記録されません")
+
+    if not record_history:
+        print("\n(このファイルは公式検証セットではないため、eval_history.csvには記録しません)")
+        return
+
     # ---- 履歴に追記（データを増やすたびの精度推移を追跡） ----
     file_exists = os.path.exists(HISTORY_PATH)
     with open(HISTORY_PATH, "a", newline="", encoding="utf-8-sig") as f:
         writer = csv.DictWriter(
-            f, fieldnames=["timestamp", "n_samples", "accuracy", "precision", "recall", "f1"]
+            f,
+            fieldnames=[
+                "timestamp",
+                "train_data_size",
+                "n_eval_samples",
+                "accuracy",
+                "precision",
+                "recall",
+                "f1",
+            ],
         )
         if not file_exists:
             writer.writeheader()
         writer.writerow(
             {
                 "timestamp": datetime.now().isoformat(timespec="seconds"),
-                "n_samples": len(samples),
+                "train_data_size": train_data_size,
+                "n_eval_samples": len(samples),
                 "accuracy": round(accuracy, 4),
                 "precision": round(precision, 4),
                 "recall": round(recall, 4),
@@ -125,4 +149,13 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--eval_file",
+        type=str,
+        default=EVAL_SAMPLES_PATH,
+        help="評価に使うCSVファイル(text, expected_label列が必要)。省略時はeval_samples.csv",
+    )
+    args = parser.parse_args()
+    is_official = os.path.abspath(args.eval_file) == os.path.abspath(EVAL_SAMPLES_PATH)
+    main(eval_path=args.eval_file, record_history=is_official)
