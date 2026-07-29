@@ -1,23 +1,76 @@
-# 感情分析モデル
+# 運用ガイド：新しい誤りが見つかった時の対応フロー
 
-## 作成途中なのでディレクトリ汚いです
+## 基本方針
 
-### 使用方法
-1.raw_texts.txtに文章を挿入、続けて文章を挿入しない
-2.manual_label.pyで判別
-3.train_harassment_classifier.pyで学習
-4.inference_harassment_classifier.pyでテスト
-5.evaluate_model.pyで正答率、再現率、適性率、F1など確認
-6.plot_eval_history.pyで図表確認
-7.run_multi_seed_experiment.pyで設定した各SEEDの正答率、再現率、適性率、F1確認
+モデルは一度作って終わりではなく、実運用で見つかった誤りを定期的に
+学習データへフィードバックしていくことで、少しずつ賢くしていく。
+これまでのプロジェクトで繰り返し効果を確認してきた「弱点を見つけて
+ピンポイントでデータを追加する」というサイクルを、実運用後も継続する。
 
-## Google ColabでT４ GPUを使用する方法
-1.GPU確認：torch.cuda.is_available() が True になるか確認
-2.ライブラリインストール：transformers, datasets, scikit-learn, accelerate
-3.ファイルアップロード：train_harassment_classifier.py / evaluate_model.py / run_multi_seed_experiment.py / labeled_data.csv / eval_samples.csv をまとめて選択してアップロード
-4.学習実行：普段通り train_harassment_classifier.py を実行するだけです。GPUがあれば transformers のTrainerが自動で使ってくれるので、コードは一切変更不要です
-5.評価実行：evaluate_model.py
-6.モデルのダウンロード：harassment_classifier/final フォルダをzip化してローカルPCにダウンロード
-7.（おまけ）eval_history.csv / multi_seed_results.csv もダウンロード可能
+## 日常の運用フロー
 
-ダウンロードしたzipを解凍して、ローカルの harassment_classifier/final に置き換えれば、これまで通り inference_harassment_classifier.py などがそのまま使えます。
+```
+① predict.py で日々のテキストを判定
+        ↓
+② needs_review フラグが立った文、または明らかな誤判定の報告を集める
+        ↓
+③ 週次/月次など、ある程度まとまった件数(目安20件以上)になったら
+   まとめて対応する
+        ↓
+④ 誤りのパターンを分類する(例:「〜だね」系、新しい話題、etc.)
+        ↓
+⑤ additional_labeled_data_N.csv の要領で、同じパターンの
+   ミニマルペア(皮肉/本物の両方)を作成する
+        ↓
+⑥ labeled_data.csv に追加
+        ↓
+⑦ run_multi_seed_experiment.py で複数シード平均を確認
+   (1回の結果で一喜一憂しない、これまでの教訓)
+        ↓
+⑧ 改善を確認できたら、harassment_classifier_seedXX を
+   本番用モデルとして差し替え
+```
+
+## 判断の目安
+
+| 状況 | 対応 |
+|---|---|
+| 誤りが数件だけ、パターンに一貫性がない | 様子見。無理に対応しない(過学習のリスク) |
+| 同じパターンの誤りが3件以上見つかった | 該当パターンのミニマルペアを15〜40件規模で追加 |
+| 全く新しい話題領域で誤りが多発 | その領域のデータを重点的に収集 |
+| 特定の単語が誤判定の原因と疑われる | その単語を含む「本物の良い意味の例文」を追加 |
+
+## やってはいけないこと(このプロジェクトで学んだ教訓)
+
+- **1回の学習結果だけで「改善した/悪化した」と判断しない**
+  → 必ず複数シードの平均で判断する
+- **精度を良く見せるためだけにシードを選ばない**
+  → データや設定の効果を検証している間は、良いシードを選ぶことを避ける
+- **train_data と eval_data(検証セット)に同じ文を入れない**
+  → 新しいテストケースを学習データに追加したら、検証セット側の
+    同じ文は削除するか、別の類似文に差し替える
+- **CSVのスキーマ(列構成)を変えたら、既存ファイルとの整合性を必ず確認する**
+  → 列がズレて壊れる事故が過去に複数回発生した
+
+## 定期メンテナンスの目安
+
+- **月次**：`predict.py`のneeds_review分・ユーザーからの誤り報告を集計し、
+  パターン分析。必要なら追加データを作成して再学習
+- **四半期ごと**：`final_holdout_test.csv`のような、学習に一切使っていない
+  新しいテストセットを作り直し、モデルの素の実力を再確認
+  (同じテストセットを使い続けると、間接的に「見慣れた問題」になってしまうため)
+
+## ファイル一覧(このプロジェクトの成果物)
+
+| ファイル | 役割 |
+|---|---|
+| `train_harassment_classifier.py` | モデルの学習 |
+| `run_multi_seed_experiment.py` | 複数シードでの学習・評価、ブレの確認 |
+| `evaluate_model.py` | 検証セットでの評価(`--eval_file`で任意のセットを指定可) |
+| `ensemble_inference.py` | 3シードのアンサンブル推論 |
+| `predict.py` | 実運用向けの一括判定スクリプト |
+| `threshold_sweep.py` | 判定閾値の調整実験 |
+| `plot_eval_history.py` | 精度推移のグラフ化 |
+| `eval_samples.csv` | 公式の検証セット(継続追跡用) |
+| `final_holdout_test.csv` | 完全に独立した最終チェック用セット |
+| `labeled_data.csv` | 学習データ本体 |
