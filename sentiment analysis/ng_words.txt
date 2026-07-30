@@ -15,6 +15,7 @@
 # --- サンプル(実際の運用ではここを本物のNGワードに置き換えてください) --
 Nigger
 Nigga
+ニガー
 Fuck
 Fuckyou
 Killyou

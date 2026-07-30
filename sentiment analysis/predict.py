@@ -77,13 +77,18 @@ def main():
 
     results = classify_texts(texts)
 
-    output_path = f"results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-    with open(output_path, "w", newline="", encoding="utf-8-sig") as f:
-        writer = csv.DictWriter(
-            f, fieldnames=["text", "label", "confidence", "needs_review", "source"]
-        )
-        writer.writeheader()
-        writer.writerows(results)
+    output_path = "predict.py_results.csv"
+
+    is_save_csv_data = int(input("結果を保存しますか？0:しない、1:する"))
+
+    if is_save_csv_data:
+        with open(output_path, "w", newline="", encoding="utf-8-sig") as f:
+            writer = csv.DictWriter(
+                f, fieldnames=["text", "label", "confidence", "needs_review", "source"]
+            )
+            writer.writeheader()
+            writer.writerows(results)
+    
 
     review_count = sum(r["needs_review"] for r in results)
     harassment_count = sum(r["label"] == "ハラスメント・侮辱" for r in results)
@@ -91,7 +96,12 @@ def main():
     print(f"\n判定完了: {len(results)}件")
     print(f"  ハラスメント・侮辱と判定: {harassment_count}件")
     print(f"  人手レビュー推奨(境界事例): {review_count}件")
-    print(f"結果を {output_path} に保存しました")
+    print(f"結果を {output_path} に保存しました" if is_save_csv_data else "")
+
+
+    for result in results:
+        print("=" * 50)
+        print(result["text"],result["label"],result["confidence"])
 
 
 if __name__ == "__main__":

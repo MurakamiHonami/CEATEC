@@ -12,13 +12,13 @@
  再ロードが走る点に注意)
 
 エンドポイント:
-    POST /result
+    POST /api/check-nondeli
         body: {"text": "分析したいテキスト"}
         response: {
-            "is_harassment": bool,
+            "is_nondeli": bool,
             "label": str,
             "confidence": float,
-            "source": str,          # "blocklist" or "bert_ensemble"
+            "reason": str,          # "blocklist(...)" or "bert_ensemble"
             "individual_seeds": [...]  # デバッグ用、シードごとの内訳
         }
 
@@ -36,6 +36,7 @@ from ensemble_inference import predict_ensemble, _load_models
 from blocklist_filter import check_blocklist
 
 _model_ready = False
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -66,10 +67,10 @@ class AnalyzeRequest(BaseModel):
 
 
 class AnalyzeResponse(BaseModel):
-    is_harassment: bool
+    is_nondeli: bool
     label: str
     confidence: float
-    source: str
+    reason: str
     individual_seeds: list | None = None
 
 
@@ -78,33 +79,33 @@ def health():
     return {"status": "ok", "model_ready": _model_ready}
 
 
-@app.post("/result", response_model=AnalyzeResponse)
-def analyze(req: AnalyzeRequest):
+@app.post("/api/check-nondeli", response_model=AnalyzeResponse)
+def check_nondeli(req: AnalyzeRequest):
     text = req.text.strip()
 
     if not text:
         return AnalyzeResponse(
-            is_harassment=False, label="該当なし", confidence=1.0, source="empty_input"
+            is_nondeli=False, label="該当なし", confidence=1.0, reason="empty_input"
         )
 
     # ① NGワードブロックリストを先にチェック(高速・確実)
     blocklist_result = check_blocklist(text)
     if blocklist_result["matched"]:
         return AnalyzeResponse(
-            is_harassment=True,
+            is_nondeli=True,
             label="ハラスメント・侮辱",
             confidence=1.0,
-            source=f"blocklist({','.join(blocklist_result['matched_source'])})",
+            reason=f"blocklist({','.join(blocklist_result['matched_source'])})",
         )
 
     # ② ヒットしなければBERTアンサンブルで文脈判定
     result = predict_ensemble(text, verbose=True)
-    is_harassment = result["label"] == "ハラスメント・侮辱"
+    is_nondeli = result["label"] == "ハラスメント・侮辱"
 
     return AnalyzeResponse(
-        is_harassment=is_harassment,
+        is_nondeli=is_nondeli,
         label=result["label"],
         confidence=result["confidence"],
-        source="bert_ensemble",
+        reason="bert_ensemble",
         individual_seeds=result.get("individual_predictions"),
     )
