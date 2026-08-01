@@ -8,8 +8,8 @@ venv/
 env/
 
 # AI / Machine Learning Models
-*.safetensors
-*.bin
+# *.safetensors
+# *.bin
 *.pt
 *.pth
 
