@@ -4,6 +4,8 @@ import Snackbar from "@mui/material/Snackbar";
 import MuiAlert from "@mui/material/Alert";
 
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000";
+
 function App() {
   const recognizerRef = useRef();
   const [volume, setVolume] = useState(0);
@@ -73,7 +75,7 @@ function App() {
     // 判定処理を別のasync関数として切り出し
     const checkNondeliWithBackend = async (transcript) => {
       try {
-        const response = await fetch("http://localhost:8000/api/check-nondeli", {
+        const response = await fetch(`${API_BASE_URL}/api/check-nondeli`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text: transcript })
