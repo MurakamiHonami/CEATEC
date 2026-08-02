@@ -176,8 +176,10 @@ function App() {
         </p>
 
         <button className="btn_10" 
-        disabled={detecting}
-          onClick={() => {
+          onClick={detecting ? () => {
+            recognizerRef.current.stop();
+          }
+          : () => {
                   recognizerRef.current.start();
                 }}>
           <span>{detecting ? "検知中..." : "検知開始"}</span>
