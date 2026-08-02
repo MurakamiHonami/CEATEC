@@ -1,0 +1,18 @@
+# ローカル環境(Windows PowerShell)で実行する場合:
+#   pip install -r requirements.txt
+#
+# Colab(GPU)で実行する場合は、accelerateも追加でインストールしてください:
+#   !pip install -r requirements.txt accelerate
+
+transformers
+datasets
+torch
+scikit-learn
+pandas
+numpy
+matplotlib
+fastapi
+uvicorn
+better-profanity
+fugashi
+unidic-lite

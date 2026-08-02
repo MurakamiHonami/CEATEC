@@ -7,9 +7,12 @@ npm install
 npm start
 ```
 
-### Docker起動方法
+### バックエンド起動方法
+別のターミナルで
 ```bash
-docker compose up
+cd sentiment analysis
+py -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
-- フロントエンド: http://localhost:3000
-- バックエンド: http://localhost:8000
+※--reload は開発時のみ。本番運用では外すこと。
+ モデルロードに時間がかかるため、--reload中の自動再起動のたびに
+ 再ロードが走る点に注意

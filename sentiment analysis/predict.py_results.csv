@@ -1,0 +1,39 @@
+﻿text,label,confidence,needs_review,source
+頭悪いからできないよね,ハラスメント・侮辱,0.992,False,bert_ensemble
+ごめんね,該当なし,0.9712,False,bert_ensemble
+すみませんでした,該当なし,0.9593,False,bert_ensemble
+まだ君ここにいたんだ,ハラスメント・侮辱,0.5666,True,bert_ensemble
+能力ないんだから見てれば,ハラスメント・侮辱,0.987,False,bert_ensemble
+ずっと寝てればいいんじゃないですか？仕事できないんですし,ハラスメント・侮辱,0.9875,False,bert_ensemble
+お仕事がとても丁寧で、いつまでも終わらないですね,ハラスメント・侮辱,0.9097,False,bert_ensemble
+お仕事がとても丁寧で、いつまでも終わらないですね笑,ハラスメント・侮辱,0.9789,False,bert_ensemble
+素晴らしい効率ですね,該当なし,0.9104,False,bert_ensemble
+ご立派な存在感でしたね、全員あなたのことをわらっていましたよ,該当なし,0.6377,True,bert_ensemble
+相変わらずお優しいことですね,ハラスメント・侮辱,0.7674,False,bert_ensemble
+大人なのに、かわいらしい服装ですね,ハラスメント・侮辱,0.8477,False,bert_ensemble
+随分と華やかな反省会でしたね,ハラスメント・侮辱,0.7401,False,bert_ensemble
+お仕事がとても丁寧ですね,該当なし,0.9816,False,bert_ensemble
+いつまでも終わらないですね,ハラスメント・侮辱,0.9838,False,bert_ensemble
+いつまでも,該当なし,0.7596,False,bert_ensemble
+終わらないですね,ハラスメント・侮辱,0.746,False,bert_ensemble
+本気なの,ハラスメント・侮辱,0.7994,False,bert_ensemble
+がんばるの,該当なし,0.9352,False,bert_ensemble
+やる気あるの,該当なし,0.9493,False,bert_ensemble
+やる気あるの？,ハラスメント・侮辱,0.9364,False,bert_ensemble
+この料理,該当なし,0.6816,True,bert_ensemble
+おいしくない,ハラスメント・侮辱,0.5557,True,bert_ensemble
+勉強できないです,ハラスメント・侮辱,0.5226,False,bert_ensemble
+運動苦手です,該当なし,0.8763,False,bert_ensemble
+泳げないです,該当なし,0.542,False,bert_ensemble
+この仕事できる？,該当なし,0.718,False,bert_ensemble
+この仕事できる,ハラスメント・侮辱,0.5229,False,bert_ensemble
+小さい猫好き,該当なし,0.879,False,bert_ensemble
+君と仕事するのかぁ,ハラスメント・侮辱,0.9783,False,bert_ensemble
+Fuck you,ハラスメント・侮辱,1.0,False,"blocklist(ng_words.txt,better-profanity)"
+ファックユー,該当なし,0.5863,True,bert_ensemble
+殺す,ハラスメント・侮辱,0.5627,True,bert_ensemble
+Kill you,ハラスメント・侮辱,1.0,False,blocklist(better-profanity)
+kill you,ハラスメント・侮辱,1.0,False,blocklist(better-profanity)
+Nigger,ハラスメント・侮辱,1.0,False,"blocklist(ng_words.txt,better-profanity)"
+Nigga,ハラスメント・侮辱,1.0,False,"blocklist(ng_words.txt,better-profanity)"
+ニガー,該当なし,0.636,True,bert_ensemble
