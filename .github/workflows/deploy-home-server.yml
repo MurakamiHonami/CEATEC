@@ -98,6 +98,9 @@ jobs:
     permissions:
       contents: read
       packages: read
+    env:
+      # sshpass reads the password from this variable (empty = 鍵認証 / Tailscale SSH)
+      SSHPASS: ${{ secrets.HOME_SERVER_PASSWORD }}
 
     steps:
       - name: Checkout
@@ -107,34 +110,86 @@ jobs:
         uses: tailscale/github-action@v4
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
-          ping: ${{ secrets.HOME_SERVER_HOST }}
           version: latest
 
+      - name: Configure SSH over Tailscale
+        shell: bash
+        env:
+          HOME_SERVER_HOST: ${{ secrets.HOME_SERVER_HOST }}
+          HOME_SERVER_USER: ${{ secrets.HOME_SERVER_USER }}
+          HOME_SERVER_SSH_PORT: ${{ vars.HOME_SERVER_SSH_PORT || '22' }}
+          HOME_SERVER_SSH_KEY: ${{ secrets.HOME_SERVER_SSH_KEY }}
+        run: |
+          set -eu
+
+          tailscale ping --timeout=5s "$HOME_SERVER_HOST" || \
+            echo "tailscale ping に応答なし。そのまま SSH を試行します"
+
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          {
+            echo "Host homeserver"
+            echo "  HostName $HOME_SERVER_HOST"
+            echo "  User $HOME_SERVER_USER"
+            echo "  Port $HOME_SERVER_SSH_PORT"
+            # Tailnet 内の接続なのでホスト鍵の事前登録(fingerprint)は行わない
+            echo "  StrictHostKeyChecking no"
+            echo "  UserKnownHostsFile /dev/null"
+            echo "  LogLevel ERROR"
+            echo "  ConnectTimeout 20"
+            echo "  ServerAliveInterval 30"
+            echo "  ServerAliveCountMax 6"
+            if [ -n "${HOME_SERVER_SSH_KEY:-}" ]; then
+              echo "  IdentityFile ~/.ssh/home_server_key"
+              echo "  IdentitiesOnly yes"
+            fi
+          } > ~/.ssh/config
+          chmod 600 ~/.ssh/config
+
+          if [ -n "${HOME_SERVER_SSH_KEY:-}" ]; then
+            printf '%s\n' "$HOME_SERVER_SSH_KEY" > ~/.ssh/home_server_key
+            chmod 600 ~/.ssh/home_server_key
+          fi
+
+          # パスワード認証を使う場合のみ sshpass を挟むラッパーを用意する
+          if [ -n "${SSHPASS:-}" ] && ! command -v sshpass >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq sshpass
+          fi
+
+          mkdir -p "$HOME/bin"
+          for cmd in ssh scp; do
+            cat > "$HOME/bin/d$cmd" <<EOF
+          #!/usr/bin/env bash
+          if [ -n "\${SSHPASS:-}" ]; then
+            exec sshpass -e $cmd "\$@"
+          fi
+          exec $cmd "\$@"
+          EOF
+            chmod +x "$HOME/bin/d$cmd"
+          done
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+
       - name: Ensure deploy directory exists
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.HOME_SERVER_HOST }}
-          username: ${{ secrets.HOME_SERVER_USER }}
-          password: ${{ secrets.HOME_SERVER_PASSWORD }}
-          port: ${{ vars.HOME_SERVER_SSH_PORT || '22' }}
-          fingerprint: ${{ secrets.HOME_SERVER_FINGERPRINT }}
-          script: |
-            mkdir -p "${{ env.HOME_SERVER_APP_DIR }}"
+        shell: bash
+        env:
+          SERVER_APP_DIR: ${{ env.HOME_SERVER_APP_DIR }}
+        run: |
+          set -eu
+          : "${SERVER_APP_DIR:?vars.HOME_SERVER_APP_DIR が未設定です}"
+          dssh homeserver "id -un; mkdir -p '$SERVER_APP_DIR'"
 
       - name: Upload server compose file
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.HOME_SERVER_HOST }}
-          username: ${{ secrets.HOME_SERVER_USER }}
-          password: ${{ secrets.HOME_SERVER_PASSWORD }}
-          port: ${{ vars.HOME_SERVER_SSH_PORT || '22' }}
-          fingerprint: ${{ secrets.HOME_SERVER_FINGERPRINT }}
-          source: docker-compose.server.yml
-          target: ${{ env.HOME_SERVER_APP_DIR }}
-          overwrite: true
+        shell: bash
+        env:
+          SERVER_APP_DIR: ${{ env.HOME_SERVER_APP_DIR }}
+        run: |
+          set -eu
+          dscp docker-compose.server.yml "homeserver:$SERVER_APP_DIR/docker-compose.server.yml"
 
       - name: Deploy application
-        uses: appleboy/ssh-action@v1
+        shell: bash
         env:
           SERVER_APP_DIR: ${{ env.HOME_SERVER_APP_DIR }}
           BACKEND_IMAGE: ${{ needs.build-and-push.outputs.backend_image }}
@@ -143,17 +198,20 @@ jobs:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BACKEND_PORT: ${{ env.HOME_SERVER_BACKEND_PORT }}
           FRONTEND_PORT: ${{ env.HOME_SERVER_FRONTEND_PORT }}
-        with:
-          host: ${{ secrets.HOME_SERVER_HOST }}
-          username: ${{ secrets.HOME_SERVER_USER }}
-          password: ${{ secrets.HOME_SERVER_PASSWORD }}
-          port: ${{ vars.HOME_SERVER_SSH_PORT || '22' }}
-          fingerprint: ${{ secrets.HOME_SERVER_FINGERPRINT }}
-          envs: SERVER_APP_DIR,BACKEND_IMAGE,FRONTEND_IMAGE,GHCR_USERNAME,GHCR_TOKEN,BACKEND_PORT,FRONTEND_PORT
-          script: |
-            set -eu
-            cd "$SERVER_APP_DIR"
-            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
-            docker compose -f docker-compose.server.yml pull
-            docker compose -f docker-compose.server.yml up -d --remove-orphans
-            docker image prune -f
+        run: |
+          set -eu
+          # 変数は標準入力経由で渡す(コマンドラインに載せないので ps から見えない)
+          {
+            for name in SERVER_APP_DIR BACKEND_IMAGE FRONTEND_IMAGE GHCR_USERNAME GHCR_TOKEN BACKEND_PORT FRONTEND_PORT; do
+              printf 'export %s=%q\n' "$name" "${!name}"
+            done
+            cat <<'REMOTE'
+          set -eu
+          cd "$SERVER_APP_DIR"
+          echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
+          docker compose -f docker-compose.server.yml pull
+          docker compose -f docker-compose.server.yml up -d --remove-orphans
+          docker image prune -f
+          docker logout ghcr.io
+          REMOTE
+          } | dssh homeserver bash -s
