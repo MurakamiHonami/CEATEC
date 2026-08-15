@@ -4,10 +4,12 @@ on:
   push:
     branches:
       - infra
+      - main
     paths:
       - ".github/workflows/deploy-home-server.yml"
       - "backend/**"
       - "my-app/**"
+      - "sentiment analysis/**"
       - "docker-compose.server.yml"
   workflow_dispatch:
 
