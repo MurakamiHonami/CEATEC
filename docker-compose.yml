@@ -3,7 +3,7 @@ services:
     build:
       context: ./my-app
     ports:
-      - "3000:3000"
+      - "5175:5175"
     volumes:
       - ./my-app:/app
       - /app/node_modules
@@ -15,8 +15,8 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: ./sentiment analysis
     ports:
-      - "8000:8000"
+      - "8002:8002"
     volumes:
-      - ./backend:/app
+      - ./sentiment analysis:/app
