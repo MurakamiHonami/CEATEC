@@ -16,3 +16,6 @@ uvicorn
 better-profanity
 fugashi
 unidic-lite
+slack-sdk
+plotly
+kaleido
