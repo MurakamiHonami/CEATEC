@@ -10,7 +10,7 @@ npm start
 ### バックエンド起動方法
 別のターミナルで
 ```bash
-cd sentiment analysis
+cd sentiment_analysis
 py -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 ※--reload は開発時のみ。本番運用では外すこと。
