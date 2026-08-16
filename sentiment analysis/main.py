@@ -27,6 +27,9 @@
 """
 
 from contextlib import asynccontextmanager
+import csv
+import os
+from datetime import datetime, timezone
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -36,6 +39,28 @@ from ensemble_inference import predict_ensemble, _load_models
 from blocklist_filter import check_blocklist
 
 _model_ready = False
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+LOG_PATH = os.path.join(BASE_DIR, "predictions_log.csv")
+LOG_FIELDNAMES = ["timestamp", "text", "label", "confidence", "source"]
+
+
+def log_prediction(text: str, label: str, confidence: float, source: str):
+    """判定結果をCSVに1件ずつ追記する(ダッシュボード生成用のログ)"""
+    file_exists = os.path.exists(LOG_PATH)
+    with open(LOG_PATH, "a", newline="", encoding="utf-8-sig") as f:
+        writer = csv.DictWriter(f, fieldnames=LOG_FIELDNAMES)
+        if not file_exists:
+            writer.writeheader()
+        writer.writerow(
+            {
+                "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "text": text,
+                "label": label,
+                "confidence": round(confidence, 4),
+                "source": source,
+            }
+        )
 
 
 @asynccontextmanager
@@ -91,16 +116,19 @@ def check_nondeli(req: AnalyzeRequest):
     # ① NGワードブロックリストを先にチェック(高速・確実)
     blocklist_result = check_blocklist(text)
     if blocklist_result["matched"]:
+        reason = f"blocklist({','.join(blocklist_result['matched_source'])})"
+        log_prediction(text, "ハラスメント・侮辱", 1.0, reason)
         return AnalyzeResponse(
             is_nondeli=True,
             label="ハラスメント・侮辱",
             confidence=1.0,
-            reason=f"blocklist({','.join(blocklist_result['matched_source'])})",
+            reason=reason,
         )
 
     # ② ヒットしなければBERTアンサンブルで文脈判定
     result = predict_ensemble(text, verbose=True)
     is_nondeli = result["label"] == "ハラスメント・侮辱"
+    log_prediction(text, result["label"], result["confidence"], "bert_ensemble")
 
     return AnalyzeResponse(
         is_nondeli=is_nondeli,

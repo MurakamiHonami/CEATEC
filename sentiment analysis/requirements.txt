@@ -11,8 +11,11 @@ scikit-learn
 pandas
 numpy
 matplotlib
-fastapi
+fastapi==0.141.1
 uvicorn
 better-profanity
 fugashi
 unidic-lite
+slack-sdk
+plotly
+kaleido
