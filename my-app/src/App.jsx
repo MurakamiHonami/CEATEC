@@ -4,7 +4,9 @@ import Snackbar from "@mui/material/Snackbar";
 import MuiAlert from "@mui/material/Alert";
 
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000";
+// 空文字を指定すると同一オリジン(/api/...)へのリクエストになる。
+// 本番はフロントのnginxが /api/ をbackendへプロキシするため、空文字でよい。
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL ?? "http://localhost:8000";
 
 function App() {
   const recognizerRef = useRef();
