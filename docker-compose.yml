@@ -17,6 +17,6 @@ services:
     build:
       context: ./sentiment analysis
     ports:
-      - "8002:8002"
+      - "8000:8000"
     volumes:
       - ./sentiment analysis:/app
