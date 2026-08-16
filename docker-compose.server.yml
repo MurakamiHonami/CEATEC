@@ -6,10 +6,10 @@ services:
       - "${BACKEND_PORT:-8000}:8000"
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')"]
-      interval: 200s
-      timeout: 200s
+      interval: 2000s
+      timeout: 2000s
       retries: 5
-      start_period: 200s
+      start_period: 2000s
 
   frontend:
     image: ${FRONTEND_IMAGE:?FRONTEND_IMAGE is required}
