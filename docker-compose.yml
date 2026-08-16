@@ -15,8 +15,8 @@ services:
 
   backend:
     build:
-      context: ./sentiment_analysis
+      context: ./sentiment analysis
     ports:
-      - "8000:8000"
+      - "8002:8002"
     volumes:
-      - ./sentiment_analysis:/app
+      - ./sentiment analysis:/app
