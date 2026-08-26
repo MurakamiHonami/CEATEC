@@ -28,6 +28,7 @@ function App() {
   const [tagValues] = useState(initialTagValues);
   const [alertOpen, setAlertOpen] = useState(false);
   const [detecting, setDetecting] = useState(false); 
+  const [sendingDashboard, setSendingDashboard] = useState(false);
   const [userMusic] = useState(null);
   /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
@@ -76,7 +77,7 @@ function App() {
           setFinalText(prevState => {
             return isAndroid ? transcript : prevState;
           });
-          setTranscript("");
+          setTranscript("発言内容を取得しています...");
         }
       });
     };
@@ -115,6 +116,30 @@ function App() {
     };
   }, []);
   /* eslint-enable react-hooks/exhaustive-deps */
+
+  // ---- ダッシュボード送信処理(コンポーネント内、他の関数と同じ場所に追加) ----
+  const handleSendDashboard = async () => {
+    setSendingDashboard(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/send-dashboard`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await response.json();
+  
+      if (data.success) {
+        console.log("ダッシュボード送信成功:", data.message);
+      } else {
+        console.error("ダッシュボード送信失敗:", data.message);
+        alert(`送信に失敗しました: ${data.message}`);
+      }
+    } catch (error) {
+      console.error("ダッシュボード送信エラー:", error);
+      alert("バックエンドへの接続に失敗しました");
+    } finally {
+      setSendingDashboard(false);
+    }
+  };
 
   useEffect(() => {
     if (alertOpen) {
@@ -200,6 +225,13 @@ function App() {
                 }}>
           <span>{detecting ? "検知中..." : "検知開始"}</span>
         </button>
+
+        <button className="btn_10"
+          disabled={sendingDashboard}
+          onClick={handleSendDashboard}>
+          <span>{sendingDashboard ? "送信中..." : "ダッシュボード送信"}</span>
+        </button>
+                
       </main>
     </div>
   );
