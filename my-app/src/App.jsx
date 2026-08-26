@@ -8,6 +8,13 @@ import MuiAlert from "@mui/material/Alert";
 // 本番はフロントのnginxが /api/ をbackendへプロキシするため、空文字でよい。
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL ?? "http://localhost:8000";
 
+// 音声認識の結果には前後の空白や文中の余分な空白(全角スペース含む)が混ざるため、
+// バックエンドへ送る前に整形する。
+const normalizeTranscript = (text) =>
+  (text ?? "")
+    .replace(/[\s]+/g, " ") // 改行・タブ・全角スペースなどを半角スペース1つにまとめる
+    .trim();
+
 function App() {
   const recognizerRef = useRef();
   const [volume, setVolume] = useState(0);
@@ -68,12 +75,17 @@ function App() {
     };
 
     // 判定処理を別のasync関数として切り出し
-    const checkNondeliWithBackend = async (transcript) => {
+    const checkNondeliWithBackend = async (rawTranscript) => {
+      const text = normalizeTranscript(rawTranscript);
+
+      // 空白だけの認識結果はバックエンドに投げない
+      if (!text) return;
+
       try {
         const response = await fetch(`${API_BASE_URL}/api/check-nondeli`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: transcript })
+          body: JSON.stringify({ text })
         });
 
         if (!response.ok) {
@@ -86,7 +98,7 @@ function App() {
         if (data.is_nondeli) {
           (userMusic || music).play();
           setAlertOpen(true);
-          console.log(`ノンデリ検出: ${transcript} (判定根拠: ${data.reason}, 確信度: ${data.confidence})`);
+          console.log(`ノンデリ検出: ${text} (判定根拠: ${data.reason}, 確信度: ${data.confidence})`);
         }
       } catch (error) {
         console.error("バックエンド通信エラー:", error);
