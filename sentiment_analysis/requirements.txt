@@ -16,3 +16,6 @@ uvicorn
 better-profanity
 fugashi
 unidic-lite
+slack-sdk
+plotly==7.0.0
+kaleido==1.3.0
