@@ -12,15 +12,14 @@ function App() {
   const recognizerRef = useRef();
   const [volume, setVolume] = useState(0);
   const [cutinPlaying, setCutinPlaying] = useState(false);
-  const initialTagValues = ["年収","結婚","彼女","彼氏","病気", "障害", "低学歴", "デブ","チビ","ハゲ","キモい","キチガイ","ブス","ババア","ジジイ","ブタ","アホ","クズ","バカ","カス","ゴミ","クソ","死ね","消えろ","殺す","ブサイク","おばさん","ババア","キモ","目障り","使えない","無能","無駄","無価値","無意味","お前","病気","障害","低学歴","デブ","チビ","ハゲ","キモい","キチガイ","ブス","ババア","ジジイ","ブタ","責任","甘え"];  
   const [finalText, setFinalText] = useState(""); 
   const handleVolumeChange = (event) => {
     setVolume(event.target.value);
   };
   const [transcript, setTranscript] = useState("ボタンを押して検知開始"); 
-  const [tagValues] = useState(initialTagValues);
   const [alertOpen, setAlertOpen] = useState(false);
   const [detecting, setDetecting] = useState(false); 
+  const [sendingDashboard, setSendingDashboard] = useState(false);
   const [userMusic] = useState(null);
   /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
@@ -54,12 +53,6 @@ function App() {
         const transcript = result[0].transcript;
         setTranscript(transcript);
         if (result.isFinal) {
-
-          // クライアント側の簡易キーワードチェック(即座に反応、ネットワーク不要)
-          if (tagValues.some(value => transcript.includes(value))) {
-            (userMusic || music).play();
-            setAlertOpen(true);
-          }
 
           // バックエンド(BERTモデル)による、文脈を考慮した判定
           // キーワードだけでは拾えない、皮肉や婉曲的な表現もここで検出する
@@ -103,6 +96,31 @@ function App() {
     };
   }, []);
   /* eslint-enable react-hooks/exhaustive-deps */
+
+  // ダッシュボード送信用処理
+  const handleSendDashboard = async () => {
+    setSendingDashboard(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/send-dashboard`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await response.json();
+  
+      if (data.success) {
+        console.log("ダッシュボード送信成功:", data.message);
+      } else {
+        console.error("ダッシュボード送信失敗:", data.message);
+        alert(`送信に失敗しました: ${data.message}`);
+      }
+    } catch (error) {
+      console.error("ダッシュボード送信エラー:", error);
+      alert("バックエンドへの接続に失敗しました");
+    } finally {
+      setSendingDashboard(false);
+    }
+  };
+
 
   useEffect(() => {
     if (alertOpen) {
@@ -187,6 +205,11 @@ function App() {
                   recognizerRef.current.start();
                 }}>
           <span>{detecting ? "検知中..." : "検知開始"}</span>
+        </button>
+        <button className="btn_10"
+          disabled={sendingDashboard}
+          onClick={handleSendDashboard}>
+          <span>{sendingDashboard ? "送信中..." : "ダッシュボード送信"}</span>
         </button>
       </main>
     </div>
