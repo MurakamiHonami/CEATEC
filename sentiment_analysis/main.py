@@ -215,4 +215,3 @@ def send_dashboard():
             message=f"Slackへの投稿に失敗しました: {result.stderr[-300:]}",
         )
 
-    return SendDashboardResponse(success=True, message="Slackに送信しました")

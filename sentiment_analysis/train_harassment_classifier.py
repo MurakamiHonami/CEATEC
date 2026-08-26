@@ -166,7 +166,7 @@ def main(seed: int = SEED, output_dir: str = OUTPUT_DIR):
         per_device_train_batch_size=32,  # 16->32に増やして高速化(精度への影響はほぼない想定)
         per_device_eval_batch_size=64,
         learning_rate=2e-5,
-        warmup_ratio=0.1,  # 学習初期の急激な重み変化を抑える
+        warmup_steps=30,  # 学習初期の急激な重み変化を抑える
         weight_decay=0.01,
         seed=seed,          # モデル重み初期化などのシード
         data_seed=seed,     # データシャッフル順のシード
