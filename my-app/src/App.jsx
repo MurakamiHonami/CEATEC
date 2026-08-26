@@ -109,11 +109,7 @@ function App() {
   }, []);
   /* eslint-enable react-hooks/exhaustive-deps */
 
-<<<<<<< HEAD
-  // ダッシュボード送信用処理
-=======
   // ---- ダッシュボード送信処理(コンポーネント内、他の関数と同じ場所に追加) ----
->>>>>>> main
   const handleSendDashboard = async () => {
     setSendingDashboard(true);
     try {
@@ -137,10 +133,6 @@ function App() {
     }
   };
 
-<<<<<<< HEAD
-
-=======
->>>>>>> main
   useEffect(() => {
     if (alertOpen) {
       setCutinPlaying(true);
@@ -225,19 +217,12 @@ function App() {
                 }}>
           <span>{detecting ? "検知中..." : "検知開始"}</span>
         </button>
-<<<<<<< HEAD
-=======
-
->>>>>>> main
         <button className="btn_10"
           disabled={sendingDashboard}
           onClick={handleSendDashboard}>
           <span>{sendingDashboard ? "送信中..." : "ダッシュボード送信"}</span>
         </button>
-<<<<<<< HEAD
-=======
                 
->>>>>>> main
       </main>
     </div>
   );
