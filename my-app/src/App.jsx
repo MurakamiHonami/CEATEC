@@ -69,7 +69,6 @@ function App() {
           setFinalText(prevState => {
             return isAndroid ? transcript : prevState;
           });
-          setTranscript("");
           setTranscript("発言内容を取得しています...");
         }
       });
