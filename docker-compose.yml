@@ -2,8 +2,10 @@ services:
   frontend:
     build:
       context: ./my-app
+    # my-app/Dockerfile の最終段は nginx で、コンテナ内は 80 番で待ち受ける。
+    # (右辺を 5175 にすると中身に誰もおらず 502 Bad Gateway になる)
     ports:
-      - "5175:5175"
+      - "5175:80"
     volumes:
       - ./my-app:/app
       - /app/node_modules
@@ -20,3 +22,7 @@ services:
       - "8000:8000"
     volumes:
       - ./sentiment_analysis:/app
+    # Slack投稿用。値は同ディレクトリの .env から読む(.env は git 管理外)
+    environment:
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN:-}
+      SLACK_CHANNEL: ${SLACK_CHANNEL:-}
