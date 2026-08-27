@@ -1,7 +1,7 @@
 FROM python:3.12-slim
 
-# uv 本体をコピー（インストール不要・単一バイナリ）
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+# uv を pip で導入（ghcr.io からの取得が不要になり、認証エラーを回避）
+RUN pip install --no-cache-dir uv
 
 WORKDIR /app
 
