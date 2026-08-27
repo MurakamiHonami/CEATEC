@@ -23,7 +23,15 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv pip install --system -r requirements.txt
 
-COPY . .
+# --- COPY をレイヤ分割する ---
+# モデル(大容量)を先に、独立したレイヤとして入れる。
+# コードだけ編集した場合、この層はキャッシュが効いて再コピー・再exportされない。
+COPY harassment_classifier_seed42/ ./harassment_classifier_seed42/
+COPY harassment_classifier_seed123/ ./harassment_classifier_seed123/
+COPY harassment_classifier_seed2024/ ./harassment_classifier_seed2024/
+
+# コード・設定(小容量)。頻繁に変わるのでレイヤの最後に置く
+COPY *.py *.csv *.txt ./
 
 EXPOSE 8000
 

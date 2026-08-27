@@ -2,3 +2,13 @@ __pycache__
 *.pyc
 .venv
 .git
+.gitignore
+README.md
+*.ipynb
+dashboard.png
+predictions_log.csv
+
+# 単体モデル(425MB)。API経路からは未参照で、
+# evaluate_model.py / train_harassment_classifier.py 専用のためイメージには含めない。
+# 推論で使うのは harassment_classifier_seed{42,123,2024}/final の3つ。
+harassment_classifier
