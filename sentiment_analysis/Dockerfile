@@ -23,6 +23,18 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv pip install --system -r requirements.txt
 
+# kaleido v1 は PNG 出力に Chrome/Chromium の実行ファイルを必要とする。
+# slim イメージには入っていないため apt で chromium を入れ、
+# choreographer(kaleido の依存)が最優先で見る BROWSER_PATH で明示的に指す。
+# fonts-noto-cjk はグラフ内の日本語ラベルが豆腐(□)になるのを防ぐため。
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        chromium \
+        fonts-noto-cjk \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV BROWSER_PATH=/usr/bin/chromium
+
 # --- COPY をレイヤ分割する ---
 # モデル(大容量)を先に、独立したレイヤとして入れる。
 # コードだけ編集した場合、この層はキャッシュが効いて再コピー・再exportされない。
