@@ -12,3 +12,7 @@ predictions_log.csv
 # evaluate_model.py / train_harassment_classifier.py 専用のためイメージには含めない。
 # 推論で使うのは harassment_classifier_seed{42,123,2024}/final の3つ。
 harassment_classifier
+
+# 環境変数ファイルをイメージに焼き込まない
+.env
+.env.*

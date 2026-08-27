@@ -1,3 +1,8 @@
 node_modules/
 __pycache__/
 my-app/build/
+
+# 環境変数(Slackトークン等)。絶対にコミットしない
+.env
+.env.*
+!.env.example

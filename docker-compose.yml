@@ -20,3 +20,7 @@ services:
       - "8000:8000"
     volumes:
       - ./sentiment_analysis:/app
+    # Slack投稿用。値は同ディレクトリの .env から読む(.env は git 管理外)
+    environment:
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN:-}
+      SLACK_CHANNEL: ${SLACK_CHANNEL:-}
